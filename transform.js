@@ -1,28 +1,35 @@
 export function transform(PD) {
-  // Sample Event Transformation
+  let words = ['alert', 'tears', 'irate'];
+
   let body = PD.inputRequest.body;
 
+  var action = PD.Acknowledge;
+  var summary = "Alertle X" // TODO add a number or something
+  var dedup_key = summary;
+
+  if (body.trigger) {
+    action = PD.Trigger;
+  } else {
+    let todays_word = words[0];
+
+    let guess = body.guess;
+
+    if (todays_word === guess) {
+      action = PD.Resolve;
+    }
+
+    summary = "Alertle X guess: " + guess;
+  }
+
   let normalized_event = {
-    event_action: PD.Trigger,
-    // optionally include a key to prevent creating duplicate
-    // incidents when the same event is sent more than once
-    // dedup_key: body.event_key,
+    event_action: action,
+    dedup_key: dedup_key,
     payload: {
-      summary: 'raw event',
-      source: 'raw event',
+      summary: '',
+      source: 'alertle',
       severity: PD.Critical,
       custom_details: body
     },
-    // optionally display links or images on web and mobile
-    // links: [{
-    //   "href": "https://example.com/",
-    //   "text": "Link text"
-    // }],
-    // images: [{
-    //   "src": "https://example.com/example.png",
-    //   "href": "https://example.com/",
-    //   "alt": "Example text"
-    // }]
   };
 
   PD.emitEventsV2([normalized_event]);
